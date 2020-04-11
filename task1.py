@@ -1,6 +1,7 @@
 from sys import argv
-from binascii import  hexlify
-
+from binascii import hexlify
+from blackbox import BlackBox
+from time import time
 
 def user_to_int(user_id):
     return int(hexlify(user_id.encode('utf8')), 16)
@@ -19,12 +20,58 @@ def myhashs(user_id):
 
     m = 69997  # len of bit array
     hash_result = []
-    num_hashes = 50
-    for i in range(1, num_hashes+1):
-        hashed_postition = (h1(user_to_int(user_id)) + i * h2(user_to_int(user_id))) % m
-        hash_result.append(hashed_postition)
+    num_hashes = 5000 # change in driver() func also if you change it here.
+    for i in range(1, num_hashes + 1):
+        hashed_position = (h1(user_to_int(user_id)) + i * h2(user_to_int(user_id))) % m
+        hash_result.append(hashed_position)
 
     return hash_result
 
 
-bit_array = [0 for i in range(69997)]
+def bloom_filter(bit_array, stream_users, num_hashes):
+    """
+    :param bit_array: bit array for bloom filter
+    :param stream_users: list of user_ids (string).
+    :param previous_users: set of previously seen users
+    :param previous_users_count: count of how many users previously seen.
+    :return: list storing index of data batch and false positive rate for that batch of data.
+    """
+    previous_users = set()
+    false_positive = 0
+    for user in stream_users:
+        already_set_count = 0
+        positions_to_set = myhashs(user)
+        # print(bit_array,"\n")
+        for position in positions_to_set:
+            if bit_array[position] == 0:
+                bit_array[position] = 1
+                previous_users.add(user)
+            else:
+                already_set_count += 1
+        if already_set_count == len(positions_to_set):
+            # user already seen before. could be false positive.
+            if user not in previous_users:  # false positive.
+                false_positive += 1
+
+    return (sum(bit_array)/len(bit_array))**num_hashes
+
+
+def driver():
+    bx = BlackBox()
+    num_of_asks = 30
+    fpr = []
+    num_hashes = 5000 # change in myhashs() func also if you change it here.
+    for i in range(num_of_asks):
+        stream_users = bx.ask("users.txt", 100)
+        bit_array = [0 for _ in range(69997)]
+        batch_fpr = bloom_filter(bit_array, stream_users, num_hashes)
+        fpr.append((i, batch_fpr))
+
+    for f in fpr:
+        print(f)
+
+
+start_time = time()
+driver()
+
+print("Time taken = ", time() - start_time, "s")
