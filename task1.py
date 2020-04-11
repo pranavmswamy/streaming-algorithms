@@ -18,9 +18,9 @@ def myhashs(user_id):
         b2 = 56167
         return a2 * x + b2
 
-    m = 10  # len of bit array
+    m = 69997  # len of bit array
     hash_result = []
-    num_hashes = 10 # change in driver() func also if you change it here.
+    num_hashes = 100 # change in driver() func also if you change it here.
     for i in range(1, num_hashes + 1):
         hashed_position = (h1(user_to_int(user_id)) + i * h2(user_to_int(user_id))) % m
         hash_result.append(hashed_position)
@@ -28,7 +28,7 @@ def myhashs(user_id):
     return hash_result
 
 
-def bloom_filter(bit_array, stream_users, num_hashes):
+def bloom_filter(bit_array, stream_users, previous_users, num_hashes):
     """
     :param bit_array: bit array for bloom filter
     :param stream_users: list of user_ids (string).
@@ -36,15 +36,11 @@ def bloom_filter(bit_array, stream_users, num_hashes):
     :param previous_users_count: count of how many users previously seen.
     :return: list storing index of data batch and false positive rate for that batch of data.
     """
-    previous_users = set()
+    # previous_users = set()
     false_positive = 0
     for user in stream_users:
-        print("--------------------------------START NEXT ITER---------------------------------")
-        print("User - ", user)
         already_set_count = 0
         positions_to_set = myhashs(user)
-        print("Bit array befor setting: ", bit_array)
-        print("Positions to set: ", sorted(positions_to_set))
         # print(bit_array,"\n")
         for position in positions_to_set:
             if bit_array[position] == 0:
@@ -56,24 +52,21 @@ def bloom_filter(bit_array, stream_users, num_hashes):
             # user already seen before. could be false positive.
             if user not in previous_users:  # false positive.
                 false_positive += 1
-                previous_users.add(user) # adding new false positive user to already seen users.
-                print("False +ve user: ", user)
-
-        print("Bit array after setting: ", bit_array)
-        print("Previously seen users: ", previous_users)
+                previous_users.add(user) # adding false positive user to set of previous seen users.
 
     return (sum(bit_array)/len(bit_array))**num_hashes
 
 
 def driver():
     bx = BlackBox()
-    num_of_asks = 1
+    num_of_asks = 30
     fpr = []
-    num_hashes = 10 # change in myhashs() func also if you change it here.
+    bit_array = [0 for _ in range(69997)]
+    previous_users = set()
+    num_hashes = 100 # change in myhashs() func also if you change it here.
     for i in range(num_of_asks):
-        stream_users = bx.ask("users.txt", 10)
-        bit_array = [0 for _ in range(10)]
-        batch_fpr = bloom_filter(bit_array, stream_users, num_hashes)
+        stream_users = bx.ask("users.txt", 100)
+        batch_fpr = bloom_filter(bit_array, stream_users, previous_users, num_hashes)
         fpr.append((i, batch_fpr))
 
     for f in fpr:
