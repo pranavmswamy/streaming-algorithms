@@ -78,16 +78,17 @@ def flajolet_martin(stream_users):
 
 def driver():
     bx = BlackBox()
-    num_of_asks = 30
+    num_of_asks = int(argv[3])
+    stream_size = int(argv[2])
     results = []
 
     for i in range(num_of_asks):
-        stream_users = bx.ask("users.txt", 300)
+        stream_users = bx.ask(str(argv[1]), stream_size)
         ground_truth = set()
         for user in stream_users:
             ground_truth.add(user)
         estimation = flajolet_martin(stream_users)
-        results.append((i, len(ground_truth), estimation))
+        results.append((i, len(ground_truth), int(estimation)))
 
     sum_estimations = 0
     sum_ground_truth = 0
@@ -98,6 +99,13 @@ def driver():
 
     print("Final Result = ", i[2]/i[1])
 
+    with open(str(argv[4]), "w") as file:
+        file.write("Time,Ground Truth,Estimation")
+        for r in results:
+            file.write("\n" + str(r[0]) + "," + str(r[1]) + "," + str(r[2]))
+        file.close()
 
-for i in range(3):
-    driver()
+
+start_time = time()
+driver()
+print("Time taken: ", time()-start_time,"s")
