@@ -81,8 +81,6 @@ def driver():
     num_of_asks = 30
     results = []
 
-
-
     for i in range(num_of_asks):
         stream_users = bx.ask("users.txt", 300)
         ground_truth = set()
@@ -94,11 +92,12 @@ def driver():
     sum_estimations = 0
     sum_ground_truth = 0
     for i in results:
-        print(i)
+        # print(i)
         sum_ground_truth += i[1]
         sum_estimations += i[2]
 
     print("Final Result = ", i[2]/i[1])
 
 
-driver()
+for i in range(3):
+    driver()
